@@ -25,13 +25,13 @@
         JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {
           provider: "gemini",
           geminiKey: "",
-          geminiModel: "gemini-2.5-flash-lite",
+          geminiModel: "gemini-3.5-flash-lite",
           openaiKey: "",
           openaiModel: "gpt-4o-mini",
         }
       );
     } catch (e) {
-      return { provider: "gemini", geminiKey: "", geminiModel: "gemini-2.5-flash-lite", openaiKey: "", openaiModel: "gpt-4o-mini" };
+      return { provider: "gemini", geminiKey: "", geminiModel: "gemini-3.5-flash-lite", openaiKey: "", openaiModel: "gpt-4o-mini" };
     }
   }
   function saveSettings(s) {
@@ -193,7 +193,7 @@
     if (!settings.geminiKey) {
       throw new Error("ابتدا کلید API گوگل Gemini را در بخش تنظیمات وارد و ذخیره کنید.");
     }
-    const model = settings.geminiModel || "gemini-2.5-flash-lite";
+    const model = settings.geminiModel || "gemini-3.5-flash-lite";
     const rawBase64 = dataUrlToRawBase64(base64Image);
     const url =
       "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -664,7 +664,7 @@
     const s = loadSettings();
     document.getElementById("providerSelect").value = s.provider || "gemini";
     document.getElementById("geminiKeyInput").value = s.geminiKey || "";
-    document.getElementById("geminiModelSelect").value = s.geminiModel || "gemini-2.5-flash-lite";
+    document.getElementById("geminiModelSelect").value = s.geminiModel || "gemini-3.5-flash-lite";
     document.getElementById("apiKeyInput").value = s.openaiKey || "";
     document.getElementById("modelSelect").value = s.openaiModel || "gpt-4o-mini";
     toggleProviderFields();
