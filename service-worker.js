@@ -1,4 +1,4 @@
-const CACHE_NAME = "golban-cache-v1";
+const CACHE_NAME = "golban-cache-v2";
 const ASSETS = [
   "./index.html",
   "./style.css",
@@ -23,23 +23,19 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Cache-first for app shell files; network passthrough for OpenAI API and everything else.
+// Network-first for same-origin app files, so updates show up immediately.
+// Falls back to cache only when offline. API calls (different origin) pass straight through.
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return; // let API calls go straight to network
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request)
-          .then((res) => {
-            const resClone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
-            return res;
-          })
-          .catch(() => cached)
-      );
-    })
+    fetch(event.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
