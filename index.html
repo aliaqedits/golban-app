@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>گل‌بان | مدیریت هوشمند گل و گیاه</title>
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1E3D2B" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="گل‌بان" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
+        <path d="M24 44C24 44 10 36 10 21C10 12 16 6 24 6C32 6 38 12 38 21C38 36 24 44 24 44Z" fill="var(--forest)"/>
+        <path d="M24 40C24 40 15 33 15 22C15 21 15.3 20 15.7 19C19 24 24 27 24 27C24 27 29 24 32.3 19C32.7 20 33 21 33 22C33 33 24 40 24 40Z" fill="var(--sage)"/>
+        <line x1="24" y1="44" x2="24" y2="12" stroke="var(--forest)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-name">گل‌بان</span>
+        <span class="brand-tag">دستیار نگهداری گیاهان</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span>باغچه من</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13.5c.04-.5.04-1 0-1.5l1.6-1.2a.5.5 0 00.1-.7l-1.5-2.6a.5.5 0 00-.6-.2l-1.9.7a6.6 6.6 0 00-1.3-.75l-.3-2a.5.5 0 00-.5-.4h-3a.5.5 0 00-.5.4l-.3 2c-.47.18-.9.43-1.3.75l-1.9-.7a.5.5 0 00-.6.2l-1.5 2.6a.5.5 0 00.1.7l1.6 1.2c-.04.5-.04 1 0 1.5l-1.6 1.2a.5.5 0 00-.1.7l1.5 2.6c.13.22.4.3.6.2l1.9-.7c.4.32.83.57 1.3.75l.3 2c.04.24.25.4.5.4h3c.25 0 .46-.16.5-.4l.3-2c.47-.18.9-.43 1.3-.75l1.9.7c.2.08.47 0 .6-.2l1.5-2.6a.5.5 0 00-.1-.7l-1.6-1.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span>تنظیمات</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <p>هر گیاه، یک قصه‌ی سبز.</p>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <section id="dashboardView" class="view">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1>باغچه من</h1>
+          <p id="todayLine"></p>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input id="searchInput" type="text" placeholder="جستجوی گیاه با نام یا گونه…" />
+          </div>
+          <button id="addPlantBtn" class="btn-primary">
+            <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            افزودن گیاه
+          </button>
+        </div>
+      </header>
+
+      <div class="stats-row" id="statsRow"></div>
+
+      <div class="filter-chips" id="filterChips">
+        <button class="chip active" data-filter="all">همه</button>
+        <button class="chip" data-filter="overdue">نیازمند آبیاری</button>
+        <button class="chip" data-filter="soon">آبیاری نزدیک</button>
+        <button class="chip" data-filter="ok">سرحال</button>
+      </div>
+
+      <div id="plantsGrid" class="plants-grid"></div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <svg viewBox="0 0 120 120" fill="none">
+          <path d="M60 108C60 108 24 88 24 52C24 30 40 16 60 16C80 16 96 30 96 52C96 88 60 108 60 108Z" stroke="var(--sage)" stroke-width="2.5" stroke-dasharray="6 6"/>
+          <path d="M60 20V70" stroke="var(--sage)" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <h3>هنوز گیاهی اضافه نکرده‌اید</h3>
+        <p>یک عکس از گلتان بگیرید، بقیه‌اش با هوش مصنوعی گل‌بان.</p>
+        <button class="btn-primary" id="emptyAddBtn">
+          <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          افزودن اولین گیاه
+        </button>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="settingsView" class="view hidden">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1>تنظیمات</h1>
+          <p>کلید هوش مصنوعی و پشتیبان‌گیری از اطلاعات</p>
+        </div>
+      </header>
+
+      <div class="settings-grid">
+        <div class="panel">
+          <h3>اتصال به هوش مصنوعی OpenAI</h3>
+          <p class="hint">کلید API شما فقط در همین مرورگر و روی همین دستگاه ذخیره می‌شود و به هیچ سروری جز OpenAI ارسال نمی‌گردد.</p>
+          <label class="field">
+            <span>کلید API</span>
+            <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>مدل تشخیص تصویر</span>
+            <select id="modelSelect">
+              <option value="gpt-4o-mini">gpt-4o-mini (سریع و مقرون‌به‌صرفه)</option>
+              <option value="gpt-4o">gpt-4o (دقت بالاتر)</option>
+            </select>
+          </label>
+          <div class="field-actions">
+            <button id="saveSettingsBtn" class="btn-primary">ذخیره تنظیمات</button>
+            <span id="settingsSaved" class="saved-flag hidden">ذخیره شد ✓</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>پشتیبان‌گیری</h3>
+          <p class="hint">اطلاعات گیاهان روی همین مرورگر ذخیره می‌شود. برای جابه‌جایی بین دستگاه‌ها یا حفظ اطلاعات، خروجی بگیرید.</p>
+          <div class="field-actions">
+            <button id="exportBtn" class="btn-secondary">خروجی گرفتن از باغچه</button>
+            <button id="importBtn" class="btn-secondary">بازیابی از فایل</button>
+            <input id="importFile" type="file" accept="application/json" class="hidden" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== Add Plant Modal ===== -->
+<div id="addModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>افزودن گیاه جدید</h2>
+      <button class="icon-btn" id="closeAddModal">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="upload-zone" id="uploadZone">
+        <img id="photoPreview" class="hidden" />
+        <div id="uploadPlaceholder" class="upload-placeholder">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 16.5V18a2 2 0 002 2h12a2 2 0 002-2v-1.5M7 9l5-5 5 5M12 4v13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p>عکس گیاه را بکشید و رها کنید یا کلیک کنید</p>
+        </div>
+        <input id="photoInput" type="file" accept="image/*" class="hidden" />
+      </div>
+
+      <div class="ai-row">
+        <button id="identifyBtn" class="btn-primary" disabled>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/></svg>
+          شناسایی با هوش مصنوعی
+        </button>
+        <button id="skipAiBtn" class="btn-ghost">ورود دستی اطلاعات</button>
+      </div>
+      <p id="aiStatus" class="ai-status hidden"></p>
+
+      <form id="plantForm" class="plant-form hidden">
+        <label class="field">
+          <span>نام مستعار گیاه</span>
+          <input id="f_nickname" type="text" placeholder="مثلاً: شمعدانی گوشه پذیرایی" required />
+        </label>
+        <div class="field-pair">
+          <label class="field">
+            <span>نام رایج</span>
+            <input id="f_commonName" type="text" placeholder="مثلاً: پتوس" />
+          </label>
+          <label class="field">
+            <span>نام علمی</span>
+            <input id="f_scientificName" type="text" placeholder="Epipremnum aureum" />
+          </label>
+        </div>
+        <div class="field-pair">
+          <label class="field">
+            <span>فاصله آبیاری (روز)</span>
+            <input id="f_watering" type="number" min="1" max="60" value="7" required />
+          </label>
+          <label class="field">
+            <span>نیاز نوری</span>
+            <input id="f_light" type="text" placeholder="نور غیرمستقیم روشن" />
+          </label>
+        </div>
+        <div class="field-pair">
+          <label class="field">
+            <span>محدوده دما</span>
+            <input id="f_temp" type="text" placeholder="۱۸ تا ۲۷ درجه" />
+          </label>
+          <label class="field">
+            <span>رطوبت مورد نیاز</span>
+            <input id="f_humidity" type="text" placeholder="متوسط تا بالا" />
+          </label>
+        </div>
+        <div class="field-pair">
+          <label class="field">
+            <span>نوع خاک</span>
+            <input id="f_soil" type="text" placeholder="خاک زهکش‌دار سبک" />
+          </label>
+          <label class="field">
+            <span>برنامه کوددهی</span>
+            <input id="f_fertilizing" type="text" placeholder="هر ۴ هفته در فصل رشد" />
+          </label>
+        </div>
+        <label class="field">
+          <span>سمیت برای حیوان خانگی / کودک</span>
+          <input id="f_toxicity" type="text" placeholder="بله، برای گربه و سگ سمی است" />
+        </label>
+        <label class="field">
+          <span>آفات و مشکلات رایج</span>
+          <textarea id="f_issues" rows="2" placeholder="شپشک آرد‌آلود، زردی برگ در آبیاری زیاد"></textarea>
+        </label>
+        <label class="field">
+          <span>نکته نگهداری</span>
+          <textarea id="f_tips" rows="2" placeholder="یک نکته کاربردی برای نگهداری بهتر"></textarea>
+        </label>
+        <label class="field">
+          <span>یادداشت شخصی</span>
+          <textarea id="f_notes" rows="2" placeholder="یادداشت‌های خودتان درباره این گیاه"></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="cancelAddBtn">انصراف</button>
+          <button type="submit" class="btn-primary">افزودن به باغچه</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Detail Drawer ===== -->
+<div id="detailOverlay" class="modal-overlay hidden">
+  <div class="drawer">
+    <button class="icon-btn drawer-close" id="closeDrawer">✕</button>
+    <div id="drawerContent"></div>
+  </div>
+</div>
+
+<!-- ===== Confirm Dialog ===== -->
+<div id="confirmOverlay" class="modal-overlay hidden">
+  <div class="confirm-box">
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="confirmCancel">انصراف</button>
+      <button class="btn-danger" id="confirmOk">حذف</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
