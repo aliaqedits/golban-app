@@ -40,6 +40,10 @@
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
         <span>باغچه من</span>
       </button>
+      <button class="nav-item" data-view="monitor">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l4-6 4 3 5-8 5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="12" r="1.6" fill="currentColor"/></svg>
+        <span>مانیتورینگ زنده</span>
+      </button>
       <button class="nav-item" data-view="settings">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13.5c.04-.5.04-1 0-1.5l1.6-1.2a.5.5 0 00.1-.7l-1.5-2.6a.5.5 0 00-.6-.2l-1.9.7a6.6 6.6 0 00-1.3-.75l-.3-2a.5.5 0 00-.5-.4h-3a.5.5 0 00-.5.4l-.3 2c-.47.18-.9.43-1.3.75l-1.9-.7a.5.5 0 00-.6.2l-1.5 2.6a.5.5 0 00.1.7l1.6 1.2c-.04.5-.04 1 0 1.5l-1.6 1.2a.5.5 0 00-.1.7l1.5 2.6c.13.22.4.3.6.2l1.9-.7c.4.32.83.57 1.3.75l.3 2c.04.24.25.4.5.4h3c.25 0 .46-.16.5-.4l.3-2c.47-.18.9-.43 1.3-.75l1.9.7c.2.08.47 0 .6-.2l1.5-2.6a.5.5 0 00-.1-.7l-1.6-1.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
         <span>تنظیمات</span>
@@ -164,6 +168,21 @@
             <input id="importFile" type="file" accept="application/json" class="hidden" />
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Live Monitoring -->
+    <section id="monitorView" class="view hidden">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1>مانیتورینگ زنده</h1>
+          <p class="live-badge"><span class="live-dot"></span> در حال به‌روزرسانی زنده</p>
+        </div>
+      </header>
+
+      <div class="monitor-layout">
+        <aside class="monitor-sidebar" id="monitorSidebar"></aside>
+        <div class="monitor-main" id="monitorMain"></div>
       </div>
     </section>
 

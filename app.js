@@ -656,8 +656,229 @@
       const view = btn.getAttribute("data-view");
       document.querySelectorAll(".view").forEach((v) => v.classList.add("hidden"));
       document.getElementById(view + "View").classList.remove("hidden");
+
+      if (view === "monitor") {
+        startMonitor();
+      } else {
+        stopMonitor();
+      }
     });
   });
+
+  // ---------- Live Monitoring ----------
+  let monitorSelection = "all";
+  let monitorIntervalId = null;
+
+  function computeLiveStatus(plant) {
+    const lastMs = new Date(plant.lastWatered || plant.addedDate).getTime();
+    const totalMs = Number(plant.wateringIntervalDays || 7) * 86400000;
+    const nextMs = lastMs + totalMs;
+    const now = Date.now();
+    const remainingMs = nextMs - now;
+    const elapsedMs = now - lastMs;
+    let percent = 100 - (elapsedMs / totalMs) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    let status = "ok";
+    if (remainingMs < 0) status = "overdue";
+    else if (remainingMs <= 86400000) status = "soon";
+    return { percent, remainingMs, status, nextMs };
+  }
+
+  function msToDuration(ms) {
+    const abs = Math.abs(ms);
+    const days = Math.floor(abs / 86400000);
+    const hours = Math.floor((abs % 86400000) / 3600000);
+    const minutes = Math.floor((abs % 3600000) / 60000);
+    const seconds = Math.floor((abs % 60000) / 1000);
+    const parts = [];
+    if (days) parts.push(`${faNum(days)} روز`);
+    if (hours || days) parts.push(`${faNum(hours)} ساعت`);
+    parts.push(`${faNum(minutes)} دقیقه`);
+    parts.push(`${faNum(seconds)} ثانیه`);
+    return parts.join(" و ");
+  }
+
+  function gaugeSVG(id) {
+    const r = 90;
+    const c = 2 * Math.PI * r;
+    return `
+      <div class="gauge-wrap" id="${id}">
+        <svg viewBox="0 0 200 200">
+          <circle class="gauge-bg" cx="100" cy="100" r="${r}" stroke-width="16"></circle>
+          <circle class="gauge-fg" id="${id}_arc" cx="100" cy="100" r="${r}" stroke-width="16"
+            stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${c.toFixed(2)}"></circle>
+        </svg>
+        <div class="gauge-center">
+          <span class="pct" id="${id}_pct">—</span>
+          <span class="lbl" id="${id}_lbl">در حال محاسبه…</span>
+        </div>
+      </div>`;
+  }
+
+  function setGauge(id, percent, status) {
+    const r = 90;
+    const c = 2 * Math.PI * r;
+    const arc = document.getElementById(id + "_arc");
+    const pctEl = document.getElementById(id + "_pct");
+    const wrap = document.getElementById(id);
+    if (!arc || !pctEl || !wrap) return;
+    const offset = c - (c * percent) / 100;
+    arc.style.strokeDashoffset = offset.toFixed(2);
+    arc.classList.remove("soon", "overdue");
+    wrap.classList.remove("pulse-danger");
+    if (status === "overdue") {
+      arc.classList.add("overdue");
+      wrap.classList.add("pulse-danger");
+    } else if (status === "soon") {
+      arc.classList.add("soon");
+    }
+    pctEl.textContent = faNum(Math.round(percent)) + "٪";
+  }
+
+  function renderMonitorSidebar() {
+    const el = document.getElementById("monitorSidebar");
+    let html = `<button class="monitor-item ${monitorSelection === "all" ? "active" : ""}" data-monitor="all">
+        <span class="dot ok"></span><span class="name">میانگین کل باغچه</span>
+      </button>`;
+    plants.forEach((p) => {
+      const st = computeLiveStatus(p);
+      const thumb = p.photo ? `<img class="thumb" src="${p.photo}" alt="" />` : `<span class="dot ${st.status}"></span>`;
+      html += `<button class="monitor-item ${monitorSelection === p.id ? "active" : ""}" data-monitor="${p.id}">
+          ${thumb}<span class="name">${escapeHtml(p.nickname)}</span>
+          <span class="pct" id="side_pct_${p.id}">${faNum(Math.round(st.percent))}٪</span>
+        </button>`;
+    });
+    el.innerHTML = html;
+    el.querySelectorAll("[data-monitor]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        monitorSelection = btn.getAttribute("data-monitor");
+        renderMonitorSidebar();
+        renderMonitorMain();
+      });
+    });
+  }
+
+  function renderMonitorMain() {
+    const main = document.getElementById("monitorMain");
+    if (plants.length === 0) {
+      main.innerHTML = `<div class="monitor-empty"><p>هنوز گیاهی در باغچه نیست. اول یک گیاه اضافه کن تا مانیتورینگ زنده‌اش را ببینی.</p></div>`;
+      return;
+    }
+    if (monitorSelection === "all") {
+      main.innerHTML = `
+        <div class="m-title"><h2>میانگین سلامت آبی باغچه</h2><p>محاسبه‌شده به‌صورت زنده از روی برنامه آبیاری همه گیاهان</p></div>
+        ${gaugeSVG("gAll")}
+        <div class="monitor-stats-row" id="monitorStatsRow"></div>
+        <div class="monitor-next-card" id="monitorNextCard"></div>`;
+    } else {
+      const plant = plants.find((p) => p.id === monitorSelection);
+      if (!plant) {
+        monitorSelection = "all";
+        renderMonitorMain();
+        return;
+      }
+      const photo = plant.photo ? `<img class="monitor-photo" src="${plant.photo}" alt="" />` : "";
+      main.innerHTML = `
+        <div class="monitor-header-row">
+          ${photo}
+          <div class="m-title"><h2>${escapeHtml(plant.nickname)}</h2><p>${escapeHtml(plant.commonName || plant.scientificName || "")}</p></div>
+        </div>
+        ${gaugeSVG("gOne")}
+        <div class="monitor-countdown" id="monitorCountdown"></div>
+        <div class="monitor-facts">
+          ${plant.light ? `<span class="monitor-fact">نور: <b>${escapeHtml(plant.light)}</b></span>` : ""}
+          ${plant.temperatureRange ? `<span class="monitor-fact">دما: <b>${escapeHtml(plant.temperatureRange)}</b></span>` : ""}
+          ${plant.humidity ? `<span class="monitor-fact">رطوبت: <b>${escapeHtml(plant.humidity)}</b></span>` : ""}
+        </div>
+        <button class="water-btn" id="monitorWaterBtn" style="padding:10px 22px;font-size:.85rem;">${dropletSVG()}ثبت آبیاری همین الان</button>`;
+      document.getElementById("monitorWaterBtn").addEventListener("click", () => {
+        waterPlant(plant.id);
+        renderMonitorSidebar();
+        tickMonitor();
+      });
+    }
+    tickMonitor();
+  }
+
+  function tickMonitor() {
+    if (plants.length === 0) return;
+    // update sidebar mini percentages + dots live
+    plants.forEach((p) => {
+      const st = computeLiveStatus(p);
+      const pctEl = document.getElementById("side_pct_" + p.id);
+      if (pctEl) pctEl.textContent = faNum(Math.round(st.percent)) + "٪";
+    });
+
+    if (monitorSelection === "all") {
+      const statuses = plants.map(computeLiveStatus);
+      const avg = statuses.reduce((sum, s) => sum + s.percent, 0) / statuses.length;
+      const worstStatus = statuses.some((s) => s.status === "overdue")
+        ? "overdue"
+        : statuses.some((s) => s.status === "soon")
+        ? "soon"
+        : "ok";
+      setGauge("gAll", avg, worstStatus);
+      const lbl = document.getElementById("gAll_lbl");
+      if (lbl) lbl.textContent = "میانگین آبرسانی";
+
+      const overdueCount = statuses.filter((s) => s.status === "overdue").length;
+      const soonCount = statuses.filter((s) => s.status === "soon").length;
+      const okCount = statuses.length - overdueCount - soonCount;
+      const statsRow = document.getElementById("monitorStatsRow");
+      if (statsRow) {
+        statsRow.innerHTML = `
+          <div class="monitor-stat"><span class="dot ok"></span>سرحال: <b>${faNum(okCount)}</b></div>
+          <div class="monitor-stat"><span class="dot soon"></span>نزدیک: <b>${faNum(soonCount)}</b></div>
+          <div class="monitor-stat"><span class="dot overdue"></span>بحرانی: <b>${faNum(overdueCount)}</b></div>`;
+      }
+
+      // nearest upcoming watering across all plants
+      let nearest = null;
+      plants.forEach((p, i) => {
+        const s = statuses[i];
+        if (!nearest || s.nextMs < nearest.s.nextMs) nearest = { p, s };
+      });
+      const nextCard = document.getElementById("monitorNextCard");
+      if (nextCard && nearest) {
+        const isOverdue = nearest.s.remainingMs < 0;
+        nextCard.innerHTML = `
+          <h4>${isOverdue ? "نیازمند آبیاری فوری" : "نزدیک‌ترین نوبت آبیاری"}</h4>
+          <div class="plant-name">${escapeHtml(nearest.p.nickname)}</div>
+          <div class="countdown">${isOverdue ? "⏰ " : "⏳ "}${msToDuration(nearest.s.remainingMs)}${isOverdue ? " از موعد گذشته" : " مانده"}</div>`;
+      }
+    } else {
+      const plant = plants.find((p) => p.id === monitorSelection);
+      if (!plant) return;
+      const st = computeLiveStatus(plant);
+      setGauge("gOne", st.percent, st.status);
+      const lbl = document.getElementById("gOne_lbl");
+      if (lbl) lbl.textContent = st.status === "overdue" ? "نیاز فوری به آب" : "سطح آبرسانی";
+      const cd = document.getElementById("monitorCountdown");
+      if (cd) {
+        cd.classList.remove("soon", "overdue");
+        if (st.status === "overdue") {
+          cd.classList.add("overdue");
+          cd.innerHTML = `⏰ <span class="num">${msToDuration(st.remainingMs)}</span> از موعد آبیاری گذشته`;
+        } else {
+          if (st.status === "soon") cd.classList.add("soon");
+          cd.innerHTML = `⏳ <span class="num">${msToDuration(st.remainingMs)}</span> تا آبیاری بعدی`;
+        }
+      }
+    }
+  }
+
+  function startMonitor() {
+    renderMonitorSidebar();
+    renderMonitorMain();
+    stopMonitor();
+    monitorIntervalId = setInterval(tickMonitor, 1000);
+  }
+  function stopMonitor() {
+    if (monitorIntervalId) {
+      clearInterval(monitorIntervalId);
+      monitorIntervalId = null;
+    }
+  }
 
   // ---------- Settings ----------
   function initSettingsForm() {
