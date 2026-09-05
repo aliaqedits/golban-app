@@ -109,19 +109,46 @@
 
       <div class="settings-grid">
         <div class="panel">
-          <h3>اتصال به هوش مصنوعی OpenAI</h3>
-          <p class="hint">کلید API شما فقط در همین مرورگر و روی همین دستگاه ذخیره می‌شود و به هیچ سروری جز OpenAI ارسال نمی‌گردد.</p>
+          <h3>اتصال به هوش مصنوعی</h3>
+          <p class="hint">کلید API شما فقط در همین مرورگر و روی همین دستگاه ذخیره می‌شود و به هیچ سروری جز سرویس انتخابی ارسال نمی‌گردد.</p>
+
           <label class="field">
-            <span>کلید API</span>
-            <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
-          </label>
-          <label class="field">
-            <span>مدل تشخیص تصویر</span>
-            <select id="modelSelect">
-              <option value="gpt-4o-mini">gpt-4o-mini (سریع و مقرون‌به‌صرفه)</option>
-              <option value="gpt-4o">gpt-4o (دقت بالاتر)</option>
+            <span>ارائه‌دهنده هوش مصنوعی</span>
+            <select id="providerSelect">
+              <option value="gemini">Google Gemini (رایگان، بدون نیاز به کارت)</option>
+              <option value="openai">OpenAI (نیاز به شارژ حساب)</option>
             </select>
           </label>
+
+          <div id="geminiFields">
+            <label class="field">
+              <span>کلید API گوگل Gemini</span>
+              <input id="geminiKeyInput" type="password" placeholder="AIza..." autocomplete="off" />
+            </label>
+            <p class="hint">کلید رایگان را از <strong>aistudio.google.com/apikey</strong> بدون نیاز به کارت بانکی بسازید.</p>
+            <label class="field">
+              <span>مدل</span>
+              <select id="geminiModelSelect">
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (بیشترین سهمیه رایگان روزانه)</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash (دقت بالاتر)</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="openaiFields" class="hidden">
+            <label class="field">
+              <span>کلید API OpenAI</span>
+              <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>مدل</span>
+              <select id="modelSelect">
+                <option value="gpt-4o-mini">gpt-4o-mini (سریع و مقرون‌به‌صرفه)</option>
+                <option value="gpt-4o">gpt-4o (دقت بالاتر)</option>
+              </select>
+            </label>
+          </div>
+
           <div class="field-actions">
             <button id="saveSettingsBtn" class="btn-primary">ذخیره تنظیمات</button>
             <span id="settingsSaved" class="saved-flag hidden">ذخیره شد ✓</span>

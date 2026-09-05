@@ -21,9 +21,17 @@
   }
   function loadSettings() {
     try {
-      return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { apiKey: "", model: "gpt-4o-mini" };
+      return (
+        JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {
+          provider: "gemini",
+          geminiKey: "",
+          geminiModel: "gemini-2.5-flash-lite",
+          openaiKey: "",
+          openaiModel: "gpt-4o-mini",
+        }
+      );
     } catch (e) {
-      return { apiKey: "", model: "gpt-4o-mini" };
+      return { provider: "gemini", geminiKey: "", geminiModel: "gemini-2.5-flash-lite", openaiKey: "", openaiModel: "gpt-4o-mini" };
     }
   }
   function saveSettings(s) {
@@ -117,33 +125,45 @@
     });
   }
 
-  // ---------- OpenAI Vision call ----------
+  // ---------- AI identification (OpenAI or Gemini) ----------
+  function dataUrlToRawBase64(dataUrl) {
+    const idx = dataUrl.indexOf(",");
+    return idx >= 0 ? dataUrl.slice(idx + 1) : dataUrl;
+  }
+
+  const SYSTEM_PROMPT =
+    "شما یک متخصص گیاه‌شناسی و باغبانی هستید. بر اساس عکس گیاه ارسال‌شده، نوع گیاه را شناسایی کن و اطلاعات نگهداری آن را ارائه بده. " +
+    "خروجی را فقط و فقط به‌صورت یک JSON معتبر با دقیقاً کلیدهای زیر برگردان، بدون هیچ توضیح اضافه و بدون بک‌تیک یا Markdown:\n" +
+    '{"commonName": "نام رایج گیاه به فارسی", "scientificName": "نام علمی به لاتین", ' +
+    '"wateringIntervalDays": عدد صحیح فاصله روزهای آبیاری, "light": "نیاز نوری به‌طور خلاصه", ' +
+    '"temperatureRange": "محدوده دمای مناسب", "humidity": "نیاز رطوبتی", "soil": "نوع خاک مناسب", ' +
+    '"fertilizing": "برنامه کوددهی", "toxicity": "سمی بودن برای حیوان خانگی یا کودک", ' +
+    '"commonIssues": "آفات و مشکلات رایج", "tips": "یک نکته کاربردی برای نگهداری بهتر"}';
+
   async function identifyWithAI(base64Image) {
     const settings = loadSettings();
-    if (!settings.apiKey) {
-      throw new Error("ابتدا کلید API را در بخش تنظیمات وارد و ذخیره کنید.");
+    if (settings.provider === "openai") {
+      return identifyWithOpenAI(base64Image, settings);
     }
-    const systemPrompt =
-      "شما یک متخصص گیاه‌شناسی و باغبانی هستید. بر اساس عکس گیاه ارسال‌شده، نوع گیاه را شناسایی کن و اطلاعات نگهداری آن را ارائه بده. " +
-      "خروجی را فقط و فقط به‌صورت یک JSON معتبر با دقیقاً کلیدهای زیر برگردان، بدون هیچ توضیح اضافه و بدون بک‌تیک یا Markdown:\n" +
-      '{"commonName": "نام رایج گیاه به فارسی", "scientificName": "نام علمی به لاتین", ' +
-      '"wateringIntervalDays": عدد صحیح فاصله روزهای آبیاری, "light": "نیاز نوری به‌طور خلاصه", ' +
-      '"temperatureRange": "محدوده دمای مناسب", "humidity": "نیاز رطوبتی", "soil": "نوع خاک مناسب", ' +
-      '"fertilizing": "برنامه کوددهی", "toxicity": "سمی بودن برای حیوان خانگی یا کودک", ' +
-      '"commonIssues": "آفات و مشکلات رایج", "tips": "یک نکته کاربردی برای نگهداری بهتر"}';
+    return identifyWithGemini(base64Image, settings);
+  }
 
+  async function identifyWithOpenAI(base64Image, settings) {
+    if (!settings.openaiKey) {
+      throw new Error("ابتدا کلید API OpenAI را در بخش تنظیمات وارد و ذخیره کنید.");
+    }
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + settings.apiKey,
+        Authorization: "Bearer " + settings.openaiKey,
       },
       body: JSON.stringify({
-        model: settings.model || "gpt-4o-mini",
+        model: settings.openaiModel || "gpt-4o-mini",
         response_format: { type: "json_object" },
         max_tokens: 700,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
             content: [
@@ -165,6 +185,54 @@
     }
     const data = await res.json();
     const content = data.choices && data.choices[0] && data.choices[0].message.content;
+    if (!content) throw new Error("پاسخ نامعتبر از هوش مصنوعی دریافت شد.");
+    return JSON.parse(content);
+  }
+
+  async function identifyWithGemini(base64Image, settings) {
+    if (!settings.geminiKey) {
+      throw new Error("ابتدا کلید API گوگل Gemini را در بخش تنظیمات وارد و ذخیره کنید.");
+    }
+    const model = settings.geminiModel || "gemini-2.5-flash-lite";
+    const rawBase64 = dataUrlToRawBase64(base64Image);
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      model +
+      ":generateContent?key=" +
+      encodeURIComponent(settings.geminiKey);
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: SYSTEM_PROMPT + "\n\nاین عکس گیاه من است. لطفاً آن را شناسایی کن و اطلاعات نگهداری‌اش را برگردان." },
+              { inline_data: { mime_type: "image/jpeg", data: rawBase64 } },
+            ],
+          },
+        ],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
+
+    if (!res.ok) {
+      let msg = "خطای سرور Gemini (کد " + res.status + ")";
+      try {
+        const errBody = await res.json();
+        if (errBody && errBody.error && errBody.error.message) msg = errBody.error.message;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    const content =
+      data.candidates &&
+      data.candidates[0] &&
+      data.candidates[0].content &&
+      data.candidates[0].content.parts &&
+      data.candidates[0].content.parts[0] &&
+      data.candidates[0].content.parts[0].text;
     if (!content) throw new Error("پاسخ نامعتبر از هوش مصنوعی دریافت شد.");
     return JSON.parse(content);
   }
@@ -594,13 +662,30 @@
   // ---------- Settings ----------
   function initSettingsForm() {
     const s = loadSettings();
-    document.getElementById("apiKeyInput").value = s.apiKey || "";
-    document.getElementById("modelSelect").value = s.model || "gpt-4o-mini";
+    document.getElementById("providerSelect").value = s.provider || "gemini";
+    document.getElementById("geminiKeyInput").value = s.geminiKey || "";
+    document.getElementById("geminiModelSelect").value = s.geminiModel || "gemini-2.5-flash-lite";
+    document.getElementById("apiKeyInput").value = s.openaiKey || "";
+    document.getElementById("modelSelect").value = s.openaiModel || "gpt-4o-mini";
+    toggleProviderFields();
   }
+
+  function toggleProviderFields() {
+    const provider = document.getElementById("providerSelect").value;
+    document.getElementById("geminiFields").classList.toggle("hidden", provider !== "gemini");
+    document.getElementById("openaiFields").classList.toggle("hidden", provider !== "openai");
+  }
+  document.getElementById("providerSelect").addEventListener("change", toggleProviderFields);
+
   document.getElementById("saveSettingsBtn").addEventListener("click", () => {
-    const apiKey = document.getElementById("apiKeyInput").value.trim();
-    const model = document.getElementById("modelSelect").value;
-    saveSettings({ apiKey, model });
+    const settings = {
+      provider: document.getElementById("providerSelect").value,
+      geminiKey: document.getElementById("geminiKeyInput").value.trim(),
+      geminiModel: document.getElementById("geminiModelSelect").value,
+      openaiKey: document.getElementById("apiKeyInput").value.trim(),
+      openaiModel: document.getElementById("modelSelect").value,
+    };
+    saveSettings(settings);
     const flag = document.getElementById("settingsSaved");
     flag.classList.remove("hidden");
     setTimeout(() => flag.classList.add("hidden"), 2200);
